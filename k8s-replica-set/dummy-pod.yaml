@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dummy
+  labels:
+    name: dummy
+    app: hello
+spec:
+  containers:
+  - name: nginx
+    image: posquit0/doraemon:latest
