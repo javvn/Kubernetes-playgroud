@@ -4,7 +4,7 @@ metadata:
   name: hello
 spec:
   containers:
-  - name: hello
+  - name: nginx
     image: nginxdemos/hello:plain-text
     ports:
       - name: http
