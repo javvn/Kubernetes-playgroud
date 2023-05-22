@@ -7,10 +7,12 @@ spec:
   selector:
     matchLabels:
       app: nginx
+      domain: foo
   template:
     metadata:
       labels:
         app: nginx
+        domain: foo
     spec:
       containers:
         - name: nginx
@@ -27,8 +29,9 @@ spec:
             - sh
             - -c
             - |
-              sed -e "s/{{name}}/$NAME/g" -e "s/{{hostname}}/$HOSTNAME/g" /usr/share/nginx/html/index.html > /usr/share/nginx/html/$NAME.html
-              sed -i "s/index.html/$NAME.html/g" /etc/nginx/conf.d/default.conf
+              H=$(echo $HOSTNAME | rev |  cut -d "-" -f1 | rev)
+              sed -e "s/{{name}}/$NAME/g" -e "s/{{hostname}}/$HOSTNAME/g" /usr/share/nginx/html/index.html > /usr/share/nginx/html/$NAME_$H.html
+              sed -i "s/index.html/$NAME_$H.html/g" /etc/nginx/conf.d/default.conf
               nginx -g 'daemon off;';
           ports:
             - containerPort: 80
@@ -50,10 +53,12 @@ spec:
   selector:
     matchLabels:
       app: nginx
+      domain: bar
   template:
     metadata:
       labels:
         app: nginx
+        domain: bar
     spec:
       containers:
         - name: nginx
@@ -70,8 +75,9 @@ spec:
             - sh
             - -c
             - |
-              sed -e "s/{{name}}/$NAME/g" -e "s/{{hostname}}/$HOSTNAME/g" /usr/share/nginx/html/index.html > /usr/share/nginx/html/$NAME.html
-              sed -i "s/index.html/$NAME.html/g" /etc/nginx/conf.d/default.conf
+              H=$(echo $HOSTNAME | rev |  cut -d "-" -f1 | rev)
+              sed -e "s/{{name}}/$NAME/g" -e "s/{{hostname}}/$HOSTNAME/g" /usr/share/nginx/html/index.html > /usr/share/nginx/html/$NAME_$H.html
+              sed -i "s/index.html/$NAME_$H.html/g" /etc/nginx/conf.d/default.conf
               nginx -g 'daemon off;';
           ports:
             - containerPort: 80
