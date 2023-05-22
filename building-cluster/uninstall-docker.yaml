@@ -1,0 +1,30 @@
+---
+- name: Install Docker on Master
+  hosts: master
+  become: true
+  tasks:
+    - name: 'Check'
+      command: "echo 'check'"
+
+    - name: "Uninstall docker-engine"
+      apt:
+        name: docker-engine
+        state: absent
+
+    - name: "Cleanup docker-engine"
+      command: "rm -rf /var/lib/docker /var/lib/containerd"
+
+    - name: "Uninstall docker.io"
+      apt:
+        name: docker.io
+        state: absent
+
+    - name: "Uninstall containerd"
+      apt:
+        name: containerd
+        state: absent
+
+    - name: "Uninstall runc"
+      apt:
+        name: runc
+        state: absent

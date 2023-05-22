@@ -1,7 +1,8 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: hello
+  name: hello123
+#  namespace: test
 spec:
   containers:
     - name: nginx

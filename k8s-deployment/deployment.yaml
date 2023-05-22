@@ -1,22 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: jawn
+  name: nginx
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
-      app: jawn
+      app: nginx
   template:
     metadata:
-      name: jawn
+      name: nginx
       labels:
-        app: jawn
+        app: nginx
     spec:
+      hostname: nginx
+      subdomain: sub
       containers:
-      - name: go
-        image: ezuoo/go:v3
+      - name: nginx
+        image: nginxdemos/hello:plain-text
         ports:
         - name: http
-          containerPort: 8090
+          containerPort: 80
           protocol: TCP

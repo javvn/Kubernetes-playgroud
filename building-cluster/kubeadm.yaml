@@ -1,0 +1,19 @@
+---
+- name: Test on Master
+  hosts: master
+  become: false
+  tasks:
+    - name: 'Echo'
+      command: "echo 'Hello World in Master !'"
+    - name: "Uninstall docker-engine"
+      apt:
+        name: docker-engine
+        state: absent
+
+#  docker docker-engine docker.io containerd runc
+#- name: Test on Worker
+#  hosts: worker
+#  become: true
+#  tasks:
+#    - name: 'Echo'
+#      command: 'echo Hello World in Worker !'

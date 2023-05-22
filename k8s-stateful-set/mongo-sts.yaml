@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb
+spec:
+  serviceName: mongo-service
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+        selector: mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:6
+          imagePullPolicy: Always
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: root
+            - name:  MONGO_INITDB_ROOT_PASSWORD
+              value: root
+            - name: MONGO_INITDB_DATABASE
+              value: sample
+#          command:
+#            - mongod --bind_ip 0.0.0.0 --replSet rs0
+#            - "--smallfiles"
+#            - "--noprealloc"
+#            - "--auth"
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - mountPath: /data/db
+              name: pvc
+  volumeClaimTemplates:
+    - metadata:
+        name: pvc
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi

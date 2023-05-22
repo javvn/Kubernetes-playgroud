@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-book
+  namespace: node
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      domain: book
+  template:
+    metadata:
+      labels:
+        app: node-book
+        domain: book
+    spec:
+      containers:
+        - name: node-book
+          image: ezuoo/node-book:v1
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: "250Mi"
+              cpu: "256m"
+          ports:
+            - name: book
+              protocol: TCP
+              containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-test-book-svc
+  namespace: node
+spec:
+  type: NodePort
+  selector:
+    domain: book
+  ports:
+    - port: 3000
+      targetPort: book
+      protocol: TCP
+      name: node-book-svc-port

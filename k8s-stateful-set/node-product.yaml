@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: node
+      domain: product
+  template:
+    metadata:
+      labels:
+        app: node
+        domain: product
+    spec:
+      containers:
+        - name: node-product
+          image: ezuoo/product-node:v1
+          env:
+            - name: NODE_ENV
+              value: prod
+            - name: NODE_DEV_DB_URI
+              value: mongodb://node:node@127.0.0.1:27017/sample
+            - name: NODE_PROD_DB_URI
+              value: mongodb://node:node@mongo:27017/sample
