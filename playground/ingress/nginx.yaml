@@ -22,6 +22,11 @@ spec:
             requests:
               cpu: 100m
               memory: 100Mi
+#              ephemeral-storage: 1Gi
+            limits:
+              cpu: 100m
+              memory: 100Mi
+            #              ephemeral-storage: 1Gi
           env:
             - name: NAME
               valueFrom:
@@ -71,6 +76,11 @@ spec:
             requests:
               cpu: 100m
               memory: 100Mi
+              #              ephemeral-storage: 1Gi
+            limits:
+              cpu: 100m
+              memory: 100Mi
+          #              ephemeral-storage: 1Gi
           env:
             - name: NAME
               valueFrom:
