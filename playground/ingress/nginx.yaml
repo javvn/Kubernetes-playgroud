@@ -24,7 +24,10 @@ spec:
               memory: 100Mi
           env:
             - name: NAME
-              value: foo
+              valueFrom:
+                configMapKeyRef:
+                    name: nginx-cm
+                    key: foo-name
           command:
             - sh
             - -c
@@ -70,7 +73,10 @@ spec:
               memory: 100Mi
           env:
             - name: NAME
-              value: bar
+              valueFrom:
+                configMapKeyRef:
+                  name: nginx-cm
+                  key: bar-name
           command:
             - sh
             - -c
