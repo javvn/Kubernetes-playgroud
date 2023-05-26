@@ -1,0 +1,61 @@
+nameOverride: argocd
+
+openshift:
+  enabled: false
+
+crds:
+  install: true
+  keep: true
+
+configs:
+  cm:
+    create: true
+    application.instanceLabelKey: argocd.argoproj.io/instance
+    server.rbac.log.enforce.enable: false
+    exec.enabled: false
+    admin.enabled: true
+
+  params:
+    server.insecure: false
+    server.basehref: /
+    server.rootpath: ''
+    server.staticassets: /shared/app
+    server.disable.auth: false
+    server.enable.gzip: false
+    server.x.frame.options: sameorigin
+    reposerver.parallelism.limit: 0
+    applicationsetcontroller.policy: sync
+    applicationsetcontroller.enablex.progressive.syncs: false
+
+  secret:
+    createSecret: true
+    argocdServerAdminPassword: ""
+    argocdServerAdminPasswordMtime: ""
+
+controller:
+  name: application-controller
+  replicas: 1
+
+dex:
+  enabled: true
+  name: dex-server
+
+redis:
+  enabled: true
+  name: redis
+
+redis-ha:
+  enabled: false
+
+server:
+  name: server
+  replicas: 1
+  service:
+    type: NodePort
+  ingress:
+    enabled: false
+  extraArgs: []
+
+repoServer:
+  name: repo-server
+  replicas: 1
