@@ -50,7 +50,7 @@ spec:
       volumes:
         - name: workdir
           hostPath:
-            path: /home/docker/workdir
+            path: /tmp/docker-desktop/workdir
 ---
 apiVersion: apps/v1
 kind: Deployment
