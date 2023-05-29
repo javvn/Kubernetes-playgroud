@@ -1,0 +1,20 @@
+---
+- name: Management apt package on Master
+  hosts: master
+  become: true
+  tasks:
+    - name: Install timeshift
+      apt:
+        name: timeshift
+        state: present
+        update_cache: true
+
+- name: Management apt package on Worker
+  hosts: worker
+  become: true
+  tasks:
+    - name: Install timeshift
+      apt:
+        name: timeshift
+        state: present
+        update_cache: true
