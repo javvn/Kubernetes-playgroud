@@ -1,0 +1,336 @@
+---
+- name: Init
+  hosts: all
+  become: false
+  gather_facts: false
+  tasks:
+    - name: whoami
+      command: whoami
+      register: whoami
+
+    - name: pwd
+      command: pwd
+      register: pwd
+
+    - name: host-key-checking
+      shell: |
+        cat > ~/.ansible.cfg <<EOF
+        [defaults]
+        host_key_checking = False
+        EOF
+
+    - name: sudoers
+      shell: |
+        sudo cat > /etc/sudoers.d/"$(whoami)" <<EOF
+        "$(whoami)" ALL=(ALL) NOPASSWD: ALL
+        EOF
+
+    - name: ls -al
+      command: "ls -al /etc/sudoers.d"
+      register: ls
+
+    - name: debug
+      debug:
+        msg:
+          whoami: "{{ whoami['stdout_lines'][0] }}"
+          pwd: "{{ pwd.stdout_lines[0] }}"
+          ls: "{{ ls.stdout_lines }}"
+
+- name: Setup k8s cluster
+  become: true
+  hosts: all
+  tags:
+    - setup-k8s-cluster
+  vars:
+    basic_package:
+      - ca-certificates
+      - curl
+      - gnupg
+    cluster_hosts:
+      - 192.168.64.9 master1.kubernetes.lab
+      - 192.168.64.10 worker1.kubernetes.lab
+      - 192.168.64.11 worker2.kubernetes.lab
+    config_file:
+      - /etc/modules-load.d/crio.conf
+      - /etc/sysctl.d/99-kubernetes-cri.conf
+    kernel_module:
+      - overlay
+      - br_netfilter
+    sysctl_args:
+      - net.bridge.bridge-nf-call-ip6tables = 1
+      - net.bridge.bridge-nf-call-iptables = 1
+      - net.ipv4.ip_forward = 1
+    cri_o_os: xUbuntu_22.04
+    cri_o_version: 1.27
+    apt_key:
+      url:
+        - https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        - https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_22.04/Release.key
+        - https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.27/xUbuntu_22.04/Release.key
+      dest:
+        - kubernetes-archive-keyring.asc
+        - libcontainers-archive-keyring.asc
+        - libcontainers-crio-archive-keyring.asc
+      deb:
+        - "https://apt.kubernetes.io/ kubernetes-xenial main"
+        - "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_22.04/ /"
+        - "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/1.27/xUbuntu_22.04/ /"
+
+  tasks:
+    - name: Set hostname
+      hostname:
+        name: "{{ inventory_hostname }}.kubernetes.lab"
+
+    - name: Install basic package
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: true
+      loop: "{{ basic_package }}"
+
+    - name: Insert hosts
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ item }}"
+      loop: "{{ cluster_hosts }}"
+
+    - name: Create dir - apt keyrings
+      file:
+        path: /etc/apt/keyrings
+        state: absent
+        mode: '0755'
+
+    - name: apt key
+      block:
+        - name: Add key
+          get_url:
+            url: "{{ item }}"
+            dest: "/etc/apt/trusted.gpg.d/{{ apt_key.dest[idx] }}"
+          loop: "{{ apt_key.url }}"
+          loop_control:
+            index_var: idx
+
+    - name: Load kernel modules
+      block:
+        - name: Create config file
+          file:
+            path: "{{ item }}"
+            state: file
+          loop: "{{ config_file }}"
+
+        - name: Add load mod
+          lineinfile:
+            path: /etc/modules-load.d/crio.conf
+            line: "{{ item }}"
+          loop: "{{ kernel_module }}"
+
+        - name: Add sysctl args
+          lineinfile:
+            path: /etc/sysctl.d/99-kubernetes-cri.conf
+            line: "{{ item }}"
+          loop: "{{ sysctl_args }}"
+
+        - name: Load mod
+          modprobe:
+            name: "{{ item }}"
+            state: present
+          loop: "{{ kernel_module }}"
+
+        - name: sysctl
+          sysctl:
+            state:
+
+    - name: Settings kernel & Disable swap
+      tags:
+        - setting-kernel
+      shell: |
+        tee /etc/sysctl.d/kubernetes.conf<<EOF
+        net.bridge.bridge-nf-call-ip6tables = 1
+        net.bridge.bridge-nf-call-iptables = 1
+        net.ipv4.ip_forward = 1
+        EOF
+        sysctl --system
+        swapoff -a
+        sed -ri '/\sswap\s/s/^#?/#/' /etc/fstab
+
+
+
+########################################## ALL APPLICATION CONTROl ###################################
+#- name: Setup Cluster
+#  hosts: all
+#  become: true
+#  gather_facts: false
+#  tags:
+#    - dependency
+#  vars:
+#    docker_package_dependency:
+#      - ca-certificates
+#      - curl
+#      - gnupg
+##      - docker-ce
+##      - docker-ce-cli
+##      - containerd.io
+##      - docker-buildx-plugin
+##      - docker-compose-plugin
+#    k8s_package_dependency:
+#      - kubectl=1.26.0-00
+#      - kubelet=1.26.0-00
+#      - kubeadm=1.26.0-00
+#  tasks:
+#    - name: Apt docker repo
+#      tags:
+#        - set-repo-docker
+#      script: ./repo/docker-set.sh
+#
+#    - name: Install packages related docker
+#      tags:
+#        - install-docker
+#      apt:
+#        name: '{{ item }}'
+#        state: present
+#        update_cache: true
+#      loop: '{{ docker_package_dependency }}'
+#
+
+
+#
+#    - name: Apt k8s repo
+#      tags:
+#        - set-k8s
+#      script: ./repo/k8s-repo.sh
+#
+#    - name: Install packages related kubeadm
+#      tags:
+#        - set-k8s
+#      apt:
+#        name: "{{ item }}"
+#        state: present
+#        update_cache: true
+#      loop: "{{ k8s_package_dependency }}"
+#
+#    - name: Lock packages related kubeadm
+#      tags:
+#        - set-k8s
+#      command: apt-mark hold kubelet kubeadm kubectl
+
+#
+#
+#
+#
+#- name: Setup Master node
+#  hosts: master
+#  become: true
+#  tags:
+#    - init-kubeadm
+#  gather_facts: true
+#  tasks:
+#    - name: Enable kubelet
+#      tags:
+#        - enable-kubelet
+#      systemd:
+#        name: kubelet
+#        enabled: true
+#        state: restarted
+#
+#    - name: Restart containerd
+#      systemd:
+#        name: containerd
+#        enabled: true
+#        state: restarted
+#
+#    - name: Init kubeadm
+#      shell: |
+#        kubeadm init --v=5 \
+#        --kubernetes-version=v1.26.0 \
+#        --control-plane-endpoint master1.kubernetes.lab:6443 \
+#        --pod-network-cidr=10.244.0.0/16 \
+#        --cri-socket unix:///var/run/containerd/containerd.sock
+#
+#
+#    - name: Configure kubectl
+#      become: false
+#      tags:
+#        - config-kubectl
+#      shell: |
+#        sudo mkdir -p $HOME/.kube
+#        sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+#        sudo chown $(id -u):$(id -g) $HOME/.kube/config
+#
+#
+############################################# DEBUG ######################################
+#- name: Debug on Master
+#  hosts: master
+#  gather_facts: false
+#  become: true
+#  tasks:
+#    - name: Hostname
+#      debug: var=inventory_hostname
+#      tags:
+#        - debug
+#        - hostname
+#
+#- name: Debug on Worker
+#  hosts: worker
+#  gather_facts: false
+#  become: true
+#  tasks:
+#    - name: Hostname
+#      tags:
+#        - debug-hostname
+#      debug: var=inventory_hostname
+#
+#- name: Debug on ALL
+#  hosts: all
+#  gather_facts: true
+#  become: true
+#  tasks:
+#    - name: output hosts
+#      tags:
+#        - debug-hosts
+#      debug:
+#        msg: "{{ inventory_hostname }}"
+#
+#    - name: ansible_facts
+#      tags:
+#        - debug-ansible-facts
+#      debug:
+#        msg: "{{ ansible_facts['default_ipv4'].address }}"
+#
+#    - name: env
+#      tags:
+#        - debug-env
+#      shell: |
+#        echo $TEST >> /home/123
+#      args:
+#        executable: /bin/bash
+#      environment:
+#        TEST: "{{ ansible_facts['default_ipv4'].address }}"
+#
+#    - name: output hostvars
+#      tags:
+#        - debug-hostvars
+#      vars:
+#        host:
+#          - master1
+#          - worker1
+#          - worker2
+#      debug:
+#        msg: "{{ hostvars[item].ansible_facts['default_ipv4'].address }} {{ hostvars[item].ansible_facts['fqdn'] }}"
+#      loop: "{{ host }}"
+#
+#
+#    - name: output echo
+#      ignore_errors: true
+#      tags:
+#        - debug-register
+#      command: kubectl version -o json
+#      register: echo_print
+#
+#    - name: debug output echo
+#      ignore_errors: true
+#      tags:
+#        - debug-register
+#      debug:
+#        var: echo_print
+#
+#

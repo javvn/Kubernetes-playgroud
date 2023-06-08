@@ -13,3 +13,10 @@ https://askubuntu.com/questions/776721/problem-with-sudo-apt-get-update-the-repo
 
 ---
 
+# ansible
+
+### [ Problem - Fingerprint ] 
+> "msg": "Using a SSH password instead of a key is not possible because Host Key checking is enabled and sshpass does not support this. Please add this host's fingerprint to your known_hosts file to manage this host."
+
+https://linux.systemv.pe.kr/ansible-fingerprint-접속-오류/
+

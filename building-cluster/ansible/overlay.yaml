@@ -1,0 +1,20 @@
+---
+- name: Overlay
+  hosts: master
+  become: false
+  vars:
+    new_dir:
+      - lower
+      - upper
+      - merge
+      - work
+  tasks:
+    - name: enable overlay
+      modprobe:
+        name: overlay
+        state: present
+
+    - name: make dir
+      command: "mkdir $HOME/{{ item }}"
+      ignore_errors: true
+      loop: "{{ new_dir }}"

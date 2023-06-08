@@ -2,7 +2,7 @@
 - name: Clean-up apt repo
   hosts: all
   become: true
-  docker_package_dependency:
+  package_dependency:
     - docker-ce
     - docker-ce-cli
     - containerd.io
@@ -13,6 +13,11 @@
     - docker.io
     - containerd
     - runc
+    - kubectl
+    - kubelet
+    - kubeadm
   tasks:
     - name: Apt docker repo
       script: ./repo/docker-unset.sh
+
+    - name:

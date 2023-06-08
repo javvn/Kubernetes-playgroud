@@ -129,3 +129,4 @@ sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --control-plane-endpoint=192.
 - https://akyriako.medium.com/install-kubernetes-on-ubuntu-20-04-f1791e8cf799
 - https://akyriako.medium.com/create-a-multi-node-kubernetes-cluster-with-vagrant-542accaad51f
 - https://velog.io/@jopopscript/kubernetes-설치on-ubuntu
+- ansible variable https://moonstrike.github.io/ansible/2016/10/08/Ansible-Variables.html
